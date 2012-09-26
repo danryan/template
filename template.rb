@@ -99,9 +99,7 @@ git :commit => '-aqm "initial commit"'
 current_recipe "gems"
 say_recipe "gems"
 
-create_file "Gemfile", :force => true do <<-EOF
-EOF
-end
+create_file "Gemfile", "", :force => true
 
 add_source 'https://rubygems.org'
 
@@ -338,9 +336,8 @@ current_recipe 'controllers'
 say_recipe 'controllers'
 
 after_bundler do
-  inject_into_file 'app/controllers/application_controller.rb', :before => "\nend" do 
-    %q"
-  \n
+  inject_into_file 'app/controllers/application_controller.rb', :before => "\nend" do %q"
+  
   rescue_from CanCan::AccessDenied do |exception|
     redirect_to root_path, :error => exception.message
   end"
@@ -389,6 +386,7 @@ after_everything do
 
   generate 'migration AddOptinToUsers opt_in:boolean'
   run 'bundle exec rake db:drop'
+  run 'bundle exec rake db:create:all'
   run 'bundle exec rake db:migrate'
   run 'bundle exec rake db:test:prepare'
   run 'bundle exec rake db:seed'
