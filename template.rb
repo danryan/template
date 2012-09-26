@@ -190,7 +190,7 @@ say_recipe "generators"
 after_bundler do
   generate 'simple_form:install --bootstrap'
   git :add => '.'
-  git :commit => "-aqm 'run generators"
+  git :commit => "-aqm 'run generators'"
 end
 
 # ---------- FILES ---------- #
@@ -204,7 +204,7 @@ after_everything do
   %w[ README README.rdoc doc/README_FOR_APP ].each {|file| remove_file file }
 
   copy_from_repo 'LICENSE.txt'
-  gsub_file 'LICENSE.txt', /YEAR_NOW/, Time.now.year
+  gsub_file 'LICENSE.txt', /YEAR_NOW/, Time.now.year.to_s
 
   copy_from_repo 'README.md'
   gsub_file 'README.md', /MY_APP/, app_name.titleize
@@ -219,7 +219,7 @@ current_recipe "testing"
 say_recipe "testing"
 
 after_bundler do
-  say_wizard "recipe running after `bundle install`"
+  say_wizard "recipe running after 'bundle install'"
 
   generate 'rspec:install'
   copy_from_repo 'spec/spec_helper.rb'
@@ -261,7 +261,7 @@ after_everything do
   remove_file 'spec/helpers/users_helper_spec.rb'
 
   git :add => '.'
-  git :commit => "-aqm 'rspec files"
+  git :commit => "-aqm 'rspec files'"
 end # after_everything
 
 # ---------- MODELS ---------- #
@@ -311,7 +311,7 @@ after_bundler do
   remove_file 'app/assets/javascripts/application.js'
 
   git :add => '.'
-  git :commit => "-aqm 'add frontend"
+  git :commit => "-aqm 'add frontend'"
 
 end # after_bundler
 
@@ -321,12 +321,13 @@ current_recipe 'init'
 say_recipe 'init'
 
 after_everything do
-  append_file 'db/seeds.rb' do <<-FILE
+  append_file 'db/seeds.rb' do 
+    %q"
     puts 'ADDING DEFAULT USER'
     user = User.create! :name => 'John Doe', :email => 'jdoe@example.com', :password => 'qwerty', :password_confirmation => 'qwerty'
     user.confirm!
     puts 'Created user: #{user.name}'
-    FILE
+    "
   end
 
   run 'bundle exec rake db:migrate'
@@ -343,12 +344,13 @@ current_recipe 'controllers'
 say_recipe 'controllers'
 
 after_bundler do
-  inject_into_file 'app/controllers/application_controller.rb', :before => "\nend" do <<-RUBY
-    \n
-    rescue_from CanCan::AccessDenied do |exception|
-      redirect_to root_path, :error => exception.message
-    end
-    RUBY
+  inject_into_file 'app/controllers/application_controller.rb', :before => "\nend" do 
+    %q"
+      \n
+      rescue_from CanCan::AccessDenied do |exception|
+        redirect_to root_path, :error => exception.message
+      end
+    "
   end
 
   copy_from_repo 'app/controllers/users_controller.rb'
@@ -473,10 +475,14 @@ after_everything do
 end
 
 # ---------- BUNDLER ---------- #
+current_recipe nil
+
 say "installing gems"
 run "bundle install"
 
 # ---------- AFTER BUNDLER ---------- #
+current_recipe nil
+
 say "running after_bundler callbacks"
 # require 'bundler/setup'
 
@@ -485,6 +491,8 @@ say "running after_bundler callbacks"
 end
 
 # ---------- AFTER EVERYTHING ---------- #
+current_recipe nil
+
 say "running after everything callbacks"
 
 @after_everything_blocks.each do |callback|
