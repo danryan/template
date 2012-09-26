@@ -1,0 +1,16 @@
+%h2 Account Activation
+
+= simple_form_for resource, :as => resource_name, :url => update_user_confirmation_path, :html => {:class => 'form-horizontal', :method => 'put'}, :id => 'activation-form' do |f|
+  = devise_error_messages! 
+  %fieldset
+    %legend
+      Account Activation #{"for" + resource.email if resource.email}
+
+    - if @requires_password 
+      %p
+        = f.input :password, :hint => 'Choose a password'
+        = f.input :password_confirmation, :hint => 'Confirm password'
+
+    = hidden_field_tag :confirmation_token, @confirmation_token
+
+    = f.button :submit, :label => "Activate"
