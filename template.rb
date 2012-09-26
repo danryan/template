@@ -169,7 +169,7 @@ after_bundler do
   copy_from_repo 'config/database-postgresql.yml', :prefs => 'postgresql'
   begin
     say "creating user named '#{app_name}' for PostgreSQL"
-    run "createuser #{app_name}"
+    run "createuser -s #{app_name}"
     gsub_file "config/database.yml", /username: .*/, "username: #{app_name}"
     gsub_file "config/database.yml", /database: myapp_development/, "database: #{app_name}_development"
     gsub_file "config/database.yml", /database: myapp_test/,        "database: #{app_name}_test"
@@ -224,8 +224,7 @@ after_bundler do
   generate 'rspec:install'
   copy_from_repo 'spec/spec_helper.rb'
   remove_dir 'test'
-  inject_into_file 'config/application.rb', :after => "Rails::Application\n" do
-    <<-RUBY
+  inject_into_file 'config/application.rb', :after => "Rails::Application\n" do %q"
     # don't generate RSpec tests for views and helpers
     config.generators do |g|
       g.test_framework :rspec
@@ -233,15 +232,12 @@ after_bundler do
       g.view_specs false
       g.helper_specs false
       g.fixture_replacement :factory_girl, :dir => 'spec/factories'
-    end
-    RUBY
+    end"
   end
-  create_file 'spec/support/devise.rb' do
-    <<-RUBY
-    RSpec.configure do |config|
-      config.include Devise::TestHelpers, :type => :controller
-    end
-    RUBY
+  create_file 'spec/support/devise.rb' do %q"
+RSpec.configure do |config|
+  config.include Devise::TestHelpers, :type => :controller
+end"
   end
   git :add => '.'
   git :commit => "-aqm 'testing frameworks'"
@@ -321,13 +317,11 @@ current_recipe 'init'
 say_recipe 'init'
 
 after_everything do
-  append_file 'db/seeds.rb' do 
-    %q"
-    puts 'ADDING DEFAULT USER'
-    user = User.create! :name => 'John Doe', :email => 'jdoe@example.com', :password => 'qwerty', :password_confirmation => 'qwerty'
-    user.confirm!
-    puts 'Created user: #{user.name}'
-    "
+  append_file 'db/seeds.rb' do %q"
+puts 'ADDING DEFAULT USER'
+user = User.create! :name => 'John Doe', :email => 'jdoe@example.com', :password => 'qwerty', :password_confirmation => 'qwerty'
+user.confirm!
+puts 'Created user: #{user.name}'"
   end
 
   run 'bundle exec rake db:migrate'
@@ -346,11 +340,10 @@ say_recipe 'controllers'
 after_bundler do
   inject_into_file 'app/controllers/application_controller.rb', :before => "\nend" do 
     %q"
-      \n
-      rescue_from CanCan::AccessDenied do |exception|
-        redirect_to root_path, :error => exception.message
-      end
-    "
+  \n
+  rescue_from CanCan::AccessDenied do |exception|
+    redirect_to root_path, :error => exception.message
+  end"
   end
 
   copy_from_repo 'app/controllers/users_controller.rb'
