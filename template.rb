@@ -99,12 +99,15 @@ git :commit => '-aqm "initial commit"'
 current_recipe "gems"
 say_recipe "gems"
 
-if options[:database]
-  gem gem_for_database
-else
-  # assume we want postgresql
-  gem 'pg'
+create_file "Gemfile", :force => true do <<-EOF
+EOF
 end
+
+add_source 'https://rubygems.org'
+
+gem 'rails', '3.2.8'
+
+gem 'pg'
 gem 'unicorn'
 gem 'haml-rails'
 gem 'cabin'
@@ -121,6 +124,8 @@ gem 'jquery-rails'
 gem 'select2-rails'
 gem 'underscore-rails'
 gem 'jquery-validation-rails'
+
+append_file 'Gemfile', "\n"
 
 gem_group :development do
   gem 'pry-rails'
@@ -173,9 +178,9 @@ after_bundler do
     raise "unable to create a user for PostgreSQL, reason: #{e}"
   end
 
-  rake "db:create:all"
+  run "bundle exec rake db:create:all"
   git :add => '.'
-  git :commit => "-aqm 'create database"
+  git :commit => "-aqm 'create database'"
 end
 
 # ---------- GENERATORS ---------- #
@@ -221,7 +226,6 @@ after_bundler do
   remove_dir 'test'
   inject_into_file 'config/application.rb', :after => "Rails::Application\n" do
     <<-RUBY
-
     # don't generate RSpec tests for views and helpers
     config.generators do |g|
       g.test_framework :rspec
@@ -293,6 +297,7 @@ after_bundler do
 
   copy_from_repo 'app/views/layouts/application.html.haml'
   gsub_file 'app/views/layouts/application.html.haml', /MY_APP/, app_name.titleize
+  remove_file 'app/views/layouts/application.html.erb'
 
   copy_from_repo 'app/views/shared/_header.html.haml'
   gsub_file 'app/views/shared/_header.html.haml', /MY_APP/, app_name.titleize
@@ -473,7 +478,7 @@ run "bundle install"
 
 # ---------- AFTER BUNDLER ---------- #
 say "running after_bundler callbacks"
-require 'bundler/setup'
+# require 'bundler/setup'
 
 @after_blocks.each do |callback|
   callback.call
